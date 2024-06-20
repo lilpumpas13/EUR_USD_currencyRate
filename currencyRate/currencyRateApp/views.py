@@ -5,18 +5,36 @@ from .models import ExchangeRate
 from django.utils.dateparse import parse_date
 
 def fetch_and_store_latest_rate():
-    response = requests.get(f'https://api.frankfurter.app/latest?from=USD&to=EUR')
-    data = response.json()
-    rate = data['rates']['EUR']
-    exchange_rate, created = ExchangeRate.objects.get_or_create(date=date.today(), defaults={'rate': rate})
-    return exchange_rate.rate  
+    try:
+        exchange_rate = ExchangeRate.objects.get(date=date.today())
+    except ExchangeRate.DoesNotExist:
+        exchange_rate = None
+    
+    if exchange_rate:
+        return exchange_rate.rate
+    
+    else:
+        response = requests.get(f'https://api.frankfurter.app/latest?from=USD&to=EUR')
+        data = response.json()
+        rate = data['rates']['EUR']
+        exchange_rate, created = ExchangeRate.objects.get_or_create(date=date.today(), defaults={'rate': rate})
+        return exchange_rate.rate
 
 def fetch_and_store_historical_rate(query_date):
-    response = requests.get(f'https://api.frankfurter.app/{query_date}?from=USD&to=EUR')
-    data = response.json()
-    rate = data['rates']['EUR']
-    exchange_rate, created = ExchangeRate.objects.get_or_create(date=query_date, defaults={'rate': rate})
-    return exchange_rate.rate  
+    try:
+        exchange_rate = ExchangeRate.objects.get(date=query_date)
+    except ExchangeRate.DoesNotExist:
+        exchange_rate = None
+    
+    if exchange_rate:
+        return exchange_rate.rate
+    
+    else:
+        response = requests.get(f'https://api.frankfurter.app/{query_date}?from=USD&to=EUR')
+        data = response.json()
+        rate = data['rates']['EUR']
+        exchange_rate, created = ExchangeRate.objects.get_or_create(date=query_date, defaults={'rate': rate})
+        return exchange_rate.rate  
 
 def get_usd_to_eur_rate(request):
     start_date = request.GET.get('start_date')
