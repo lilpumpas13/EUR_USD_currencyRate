@@ -32,11 +32,15 @@ def get_usd_to_eur_rate(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     # if a single date is specified -> expose currency rate of specified date
-    elif not start_date and not end_date and single_date:
+    if single_date:
         single_date = parse_date(single_date)
 
         if not single_date:
             return JsonResponse({'error': 'Invalid format. Use YYYY-MM-DD.'}, status=400)
         
-        fetch_and_store_historical_rate(single_date)
+        try:
+            rate = fetch_and_store_historical_rate(single_date)
+            return JsonResponse({'USD_EUR': rate})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
 
